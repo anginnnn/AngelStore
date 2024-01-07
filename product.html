@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AngelStore</title>
+    <script
+      src="https://kit.fontawesome.com/4773f76246.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
+      crossorigin="anonymous"
+    />
+    <style>
+      body {
+        background-color: #f1f1f1;
+        position: relative;
+      }
+      .product {
+        display: flex;
+      }
+      .card-body {
+        margin: 0.5em;
+      }
+      .card-img-top {
+        width: 30em; /* Defina a largura desejada */
+        height: auto; /* Mantenha a proporção original da imagem */
+      }
+      .card-text {
+        margin-bottom: 1em;
+      }
+      #aviso {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #00466e;
+        text-align: center;
+        color: #f5f5f5;
+        width: 300px;
+        padding: 4px;
+        border-radius: 4px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      #avaliado {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #ffffff;
+        text-align: center;
+        color: #000000;
+        width: 300px;
+        padding: 4px;
+        border-radius: 10px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      /* Estilo para as estrelas */
+      .rating {
+        display: flex;
+        list-style: none;
+        padding: 0;
+      }
+
+      .rating input {
+        display: none;
+      }
+
+      .rating label {
+        color: #ddd;
+        font-size: 30px;
+        margin: 0 5px;
+      }
+
+      .rating label:before {
+        content: "\2605";
+      }
+
+      .rating input:checked ~ label,
+      .rating input:checked ~ label ~ label {
+        color: #f90;
+      }
+    </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Recupera o id do produto da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = Number(urlParams.get("id"));
+        // Carrega os produtos do arquivo JSON
+        fetch("https://raw.githubusercontent.com/anginnnn/AngelStoreJSON/main/produtos.json")
+          .then((response) => response.json())
+          .then((produtos) => {
+            // Encontra o produto correspondente pelo id
+            const produto = produtos.find((p) => p.id === productId);
+            // Exibe as informações do produto
+            if (produto) {
+              // Preenche as informações do produto
+              document.getElementById("produto-info").innerHTML = `
+                <div class="product">
+                  <img src="${produto.imagem}" class="card-img-top" alt="${produto.nome}">
+                  <div div class="card-body" style="max-width: 2000rem;">
+                      <h3 class="card-title">${produto.nome}</h3>
+                      <h4 class="card-subtitle" >$${produto.preco}</h4>
+                      <h5 class="card-info" style="margin-top: 5px;"><i class="fa-solid fa-star"></i>${produto.avaliacao}</h5>
+                      <button id="add-cart" class="btn btn-primary btn-lg btn-block" style="margin-top:5px"><i class="fa-solid fa-cart-plus"></i> Adicionar ao Carrinho</button>
+                     
+                      <p class="card-text" style="max-width: 30em; border-left: 0.2em solid #0a739c; margin-top:1em; padding-left: 0.3em;" >${produto.descricao}</p>
+                  </div>
+                </div>
+              `;
+            }
+            document.querySelector("#add-cart").onclick = function () {
+              // Obtém o carrinho atual do armazenamento local
+              mostrarAviso();
+              const carrinho =
+                JSON.parse(localStorage.getItem("carrinho")) || [];
+
+              const produtoExistente = carrinho.find(
+                (produto1) => produto1.id === produto.id
+              );
+
+              // Adiciona o produto ao carrinho
+              if (produtoExistente) {
+                produtoExistente.quantidade += 1;
+              } else {
+                carrinho.push({
+                  id: produto.id,
+                  imagem: produto["imagem"],
+                  nome: produto.nome,
+                  preco: produto.preco,
+                  quantidade: 1,
+                });
+              }
+              // Armazena o carrinho de volta no armazenamento local
+              localStorage.setItem("carrinho", JSON.stringify(carrinho));
+
+              // Exibe uma mensagem de sucesso
+            };
+          })
+          .catch((error) => {
+            console.error("Erro ao carregar produtos.json:", error);
+          });
+        function mostrarAviso() {
+          document.getElementById("aviso").style =
+            "opacity: 1; visibility: visible";
+          setTimeout(() => {
+            document.getElementById("aviso").style =
+              "opacity: 0; visibility: hidden";
+          }, 1000);
+        }
+        //Avaliar o produto
+        const ratingInputs = document.querySelectorAll(".rating input");
+        const ratingLabels = document.querySelectorAll(".rating label");
+
+        ratingLabels.forEach((label, index) => {
+          label.addEventListener("click", () => {
+            // Preenche todas as estrelas até a estrela clicada
+            for (let i = 0; i <= index; i++) {
+              ratingLabels[i].style.color = "#f90";
+              ratingInputs[i].checked = true;
+            }
+
+            // Desmarca estrelas após a estrela clicada
+            for (let i = index + 1; i < ratingLabels.length; i++) {
+              ratingLabels[i].style.color = "#ddd";
+              ratingInputs[i].checked = false;
+            }
+          });
+        });
+        const stars = document.querySelectorAll(".star");
+        document.querySelector("#avaliar").onclick = function () {
+          ratingLabels.forEach((star, i) => {
+            ratingLabels[i].style.color = "#ddd";
+            ratingInputs[i].checked = false;
+          });
+          document.getElementById("avaliado").style =
+            "opacity: 1; visibility: visible";
+          setTimeout(() => {
+            document.getElementById("avaliado").style =
+              "opacity: 0; visibility: hidden";
+          }, 1000);
+        };
+      });
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="./main.html" style="color: #0a739c"
+          ><i class="fa-solid fa-at"></i>AngelStore</a
+        >
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="./main.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./list.html">Produtos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./cart.html">Carrinho</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-5">
+      <div id="produto-info"></div>
+      <!-- Aqui, adicione a descrição e as informações do produto -->
+      <div id="descricao" style="margin: 1.5em"></div>
+    </div>
+
+    <div class="container mt-5" style="display: flex; margin-bottom: 3em">
+      <!-- Sistema de Avaliação -->
+      <div class="row">
+        <h4 class="col" style="margin: 1em 0 0 0">Avalie este produto:</h4>
+        <div
+          class="container col-1"
+          style="
+            display: grid;
+            border-left: solid 2px #0a739c;
+            width: fit-content;
+          "
+        >
+          <ul class="rating" style="margin: 0">
+            <li>
+              <input
+                type="radio"
+                id="star5"
+                name="rating"
+                value="5"
+                class="star"
+              /><label for="star5"></label>
+            </li>
+            <li>
+              <input
+                type="radio"
+                id="star4"
+                name="rating"
+                value="4"
+                class="star"
+              /><label for="star4"></label>
+            </li>
+            <li>
+              <input
+                type="radio"
+                id="star3"
+                name="rating"
+                value="3"
+                class="star"
+              /><label for="star3"></label>
+            </li>
+            <li>
+              <input
+                type="radio"
+                id="star2"
+                name="rating"
+                value="2"
+                class="star"
+              /><label for="star2"></label>
+            </li>
+            <li>
+              <input
+                type="radio"
+                id="star1"
+                name="rating"
+                value="1"
+                class="star"
+              /><label for="star1"></label>
+            </li>
+          </ul>
+          <button
+            class="btn btn-primary btn-sm"
+            style="width: 100%"
+            id="avaliar"
+          >
+            Enviar Avaliação
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="aviso"><i class="fa-solid fa-cart-arrow-down"></i>Produto Adicionado ao carrinho</div>
+    <div id="avaliado">
+      <i class="fa-solid fa-check" style="color: #06b600"></i>Avaliação Enviada!
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"
+      integrity="sha384-eMNCOe7tC1doHpGoJtKh7z7lGz7fuP4F8nfdFvAOA6Gg/z6Y5J6XqqyGXYM2ntX3"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.min.js"
+      integrity="sha384-pzjw8f+ua7Kw1TIq0v8FqFjcJ6pajs/rfdfs3SO+kD4Ck5BdPtF+to8xMp9MvcJ4U"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
